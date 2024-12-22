@@ -20,28 +20,29 @@ class StyledPDF(FPDF):
 
     def add_cover_page(self, name):
         self.add_page()
-        # Add a subtle gradient background for the cover page
-        self.set_fill_color(220, 245, 255)  # Light blue
+        # Add a solid background instead of gradient
+        self.set_fill_color(220, 245, 255)  # Light blue fill
         self.rect(0, 0, 210, 297, 'F')
 
         # Title
         self.set_font('Arial', 'B', 28)
         self.set_text_color(0, 102, 204)
         self.cell(0, 20, 'Your Personalized Soul Report', ln=True, align='C')
-        self.ln(15)
+        self.ln(20)
 
         # Subtitle
         self.set_font('Arial', '', 16)
         self.cell(0, 10, f'Prepared for: {name}', ln=True, align='C')
         self.ln(10)
         self.cell(0, 10, f'Date: {self.get_date()}', ln=True, align='C')
-        self.ln(20)
+        self.ln(30)
 
         # Inspirational quote
         self.set_font('Arial', 'I', 14)
         self.set_text_color(128)
         self.multi_cell(0, 10, '"The cosmos is within us. We are made of star-stuff."', align='C')
         self.ln(10)
+
 
     def add_section_title(self, title):
         # Add a section title with a colored banner

@@ -71,6 +71,13 @@ if st.button("Generate Report"):
                 # Save results to session state
                 st.session_state['human_design_data'] = human_design_data
 
+                if birthdate_text_input:
+                    try:
+                        formatted_birthdate = str(birthdate_text_input)
+                    except Exception as e:
+                        st.error(f"Invalid birthdate format: {e}")
+
+
                 # Generate PDF in memory
                 pdf_file = generate_pdf_report(name, numerology_data, human_design_data, formatted_birthdate)
                 pdf_file.seek(0)
