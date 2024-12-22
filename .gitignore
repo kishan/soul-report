@@ -1,0 +1,13 @@
+temp/
+.DS_Store
+
+# Ignore virtual environments
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore Streamlit-specific files (if any)
+.streamlit/
