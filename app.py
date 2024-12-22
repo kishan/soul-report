@@ -1,5 +1,6 @@
 import requests
 import streamlit as st
+from fpdf import FPDF
 from datetime import date
 
 def fetch_human_design_report(birthdate, birthtime, location):
@@ -51,6 +52,42 @@ def calculate_soul_urge_number(full_name):
     total = sum(letter_to_number[char] for char in full_name.lower() if char in vowels)
     return reduce_to_single_digit(total)
 
+def generate_pdf_report(name, numerology_data, human_design_data, birthdate):
+    pdf = FPDF()
+    pdf.add_page()
+
+    # Title
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, 'Tetralogy Report', ln=True, align='C')
+    pdf.ln(10)
+
+    # User Details
+    pdf.set_font('Arial', '', 12)
+    pdf.cell(0, 10, f'Name: {name}', ln=True)
+    pdf.cell(0, 10, f'Date of Birth: {birthdate}', ln=True)
+    pdf.ln(5)
+
+    # Numerology Section
+    pdf.set_font('Arial', 'B', 14)
+    pdf.cell(0, 10, 'Numerology Report:', ln=True)
+    pdf.set_font('Arial', '', 12)
+    for key, value in numerology_data.items():
+        pdf.cell(0, 10, f'{key}: {value}', ln=True)
+    pdf.ln(10)
+
+    # Human Design Section
+    pdf.set_font('Arial', 'B', 14)
+    pdf.cell(0, 10, 'Human Design Report:', ln=True)
+    pdf.set_font('Arial', '', 12)
+    for key, value in human_design_data.items():
+        pdf.cell(0, 10, f'{key}: {value}', ln=True)
+    pdf.ln(10)
+
+    # Save PDF
+    pdf_output = 'tetralogy_report.pdf'
+    pdf.output(pdf_output)
+    return pdf_output
+
 # Streamlit interface
 st.title("Tetralogy Report")
 
@@ -64,27 +101,26 @@ location_input = st.selectbox(
 )
 
 if st.button("Generate Report"):
-    # Use only birthdate_text_input
     if birthdate_text_input:
         formatted_birthdate = birthdate_text_input
         formatted_birthdate_human_design = format_birthdate(birthdate_text_input)
 
         # Numerology Calculations
+        numerology_data = {}
         if formatted_birthdate and name:
-            life_path = calculate_life_path_number(formatted_birthdate)
-            birthday = calculate_birthday_number(formatted_birthdate)
-            destiny = calculate_destiny_number(name)
-            soul_urge = calculate_soul_urge_number(name)
+            numerology_data['Life Path Number'] = calculate_life_path_number(formatted_birthdate)
+            numerology_data['Birthday Number'] = calculate_birthday_number(formatted_birthdate)
+            numerology_data['Destiny Number'] = calculate_destiny_number(name)
+            numerology_data['Soul Urge Number'] = calculate_soul_urge_number(name)
 
             st.subheader("Numerology Report")
-            st.write(f"**Life Path Number:** {life_path}")
-            st.write(f"**Birthday Number:** {birthday}")
-            st.write(f"**Destiny Number:** {destiny}")
-            st.write(f"**Soul Urge Number:** {soul_urge}")
+            for key, value in numerology_data.items():
+                st.write(f"**{key}:** {value}")
         else:
             st.error("Please fill in your full name and birthdate for Numerology.")
 
         # Human Design Calculations
+        human_design_data = {}
         if formatted_birthdate_human_design and birthtime_input and location_input:
             formatted_birthtime = birthtime_input.strftime("%H:%M")
 
@@ -92,18 +128,29 @@ if st.button("Generate Report"):
             report_data = fetch_human_design_report(formatted_birthdate_human_design, formatted_birthtime, location_input)
 
             if report_data:
-                st.subheader("Human Design Report")
-                st.write(f"**Type:** {report_data.get('type', 'N/A')}")
-                st.write(f"**Profile:** {report_data.get('profile', 'N/A')}")
-                st.write(f"**Strategy:** {report_data.get('strategy', 'N/A')}")
-                st.write(f"**Authority:** {report_data.get('authority', 'N/A')}")
-                st.write(f"**Incarnation Cross:** {report_data.get('incarnation_cross', 'N/A')}")
-                st.write(f"**Channels:** {', '.join(report_data.get('channels_long', []))}")
-                st.write(f"**Centers:** {', '.join(report_data.get('centers', []))}")
+                human_design_data['Type'] = report_data.get('type', 'N/A')
+                human_design_data['Profile'] = report_data.get('profile', 'N/A')
+                human_design_data['Strategy'] = report_data.get('strategy', 'N/A')
+                human_design_data['Authority'] = report_data.get('authority', 'N/A')
+                human_design_data['Incarnation Cross'] = report_data.get('incarnation_cross', 'N/A')
+                human_design_data['Channels'] = ', '.join(report_data.get('channels_long', []))
+                human_design_data['Centers'] = ', '.join(report_data.get('centers', []))
 
-                # Dropdown for full API response
-                with st.expander("Full API Response"):
-                    st.json(report_data)
+                st.subheader("Human Design Report")
+                for key, value in human_design_data.items():
+                    st.write(f"**{key}:** {value}")
+
+                # Generate PDF
+                pdf_file = generate_pdf_report(name, numerology_data, human_design_data, formatted_birthdate)
+
+                # Provide Download Link
+                with open(pdf_file, 'rb') as f:
+                    st.download_button(
+                        label="Download Your Tetralogy Report",
+                        data=f,
+                        file_name=pdf_file,
+                        mime="application/pdf"
+                    )
             else:
                 st.error("Failed to retrieve the report.")
         else:
